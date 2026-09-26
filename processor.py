@@ -187,6 +187,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
             # speed in km/h, convert to m/s
             dv_ms = (speed - prev_speed) / 3.6
             accel = dv_ms / dt
+            vehicle.last_acceleration = round(accel, 2)
             
             if accel < HARSH_BRAKING_THRESHOLD_MS2:
                 evt = SafetyEvent(

@@ -7,13 +7,28 @@ let driverVid = null;
 document.addEventListener('DOMContentLoaded', () => {
     fetchConfig();
     setupNavigation();
+    populateVehicleDropdown();
 });
+
+async function populateVehicleDropdown() {
+    try {
+        const res = await fetch(`${API_BASE}/vehicles`);
+        const vehicles = await res.json();
+        const select = document.getElementById('driver-vid-select');
+        select.innerHTML = '';
+        vehicles.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.vehicle_id;
+            opt.innerText = v.vehicle_id;
+            select.appendChild(opt);
+        });
+    } catch (e) { console.error("Failed to load vehicles for dropdown"); }
+}
 
 async function loginAs(role) {
     if (role === 'driver') {
         const did = document.getElementById('driver-id').value.trim().toUpperCase();
-        // Hardware-bound or IP-bound vehicle identification:
-        const vid = 'TN14-4289'; 
+        const vid = document.getElementById('driver-vid-select').value;
         const vtype = 'Alto';
         
         if (!did) return alert('Enter Driver ID');
@@ -117,6 +132,7 @@ async function updateDriverView() {
         document.getElementById('driver-my-status').innerText = me.status;
         document.getElementById('driver-my-status').className = `badge badge-${me.status === 'Normal' ? 'normal' : me.status === 'Warning' ? 'warning' : 'critical'}`;
         document.getElementById('driver-my-speed').innerText = me.last_speed ? me.last_speed.toFixed(1) : '0';
+        document.getElementById('driver-my-accel').innerText = me.last_acceleration ? me.last_acceleration.toFixed(2) : '0.00';
         document.getElementById('driver-my-fuel').innerText = me.fuel_level ? me.fuel_level.toFixed(1) + '%' : '-';
         document.getElementById('driver-my-engine').innerText = me.engine_status || '-';
         document.getElementById('driver-my-location').innerText = `${me.last_latitude ? me.last_latitude.toFixed(4) : '-'}, ${me.last_longitude ? me.last_longitude.toFixed(4) : '-'}`;
@@ -175,9 +191,10 @@ async function updateVehicles() {
         tr.innerHTML = `
             <td><strong>${v.vehicle_id}</strong></td>
             <td><span class="badge ${badgeClass}">${v.status}</span></td>
-            <td>${v.risk_level}</td>
             <td>${Math.round(v.safety_score)}</td>
             <td>${v.last_speed ? v.last_speed.toFixed(1) : 0} km/h</td>
+            <td>${v.last_acceleration ? v.last_acceleration.toFixed(2) : '0.00'} m/s²</td>
+            <td>${v.fuel_level ? v.fuel_level.toFixed(1) + '%' : '-'}</td>
             <td>${v.last_latitude ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude ? v.last_longitude.toFixed(4) : '-'}</td>
         `;
         tbody.appendChild(tr);
@@ -280,5 +297,22 @@ async function injectScenario(action) {
         // Silently succeed
     } catch (e) {
         console.error("Failed to inject scenario.", e);
+    }
+}
+
+async function promptAddVehicle() {
+    const vid = prompt("Enter new Vehicle ID (e.g. V109):");
+    if (!vid) return;
+    try {
+        await fetch(`${API_BASE}/vehicles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vehicle_id: vid })
+        });
+        alert(`Vehicle ${vid} added! Telemetry simulator will now pick it up.`);
+        updateVehicles();
+        populateVehicleDropdown();
+    } catch (e) {
+        console.error("Failed to add vehicle", e);
     }
 }

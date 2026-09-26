@@ -14,6 +14,7 @@ class Vehicle(Base):
     last_latitude = Column(Float, nullable=True)
     last_longitude = Column(Float, nullable=True)
     last_speed = Column(Float, nullable=True)
+    last_acceleration = Column(Float, nullable=True)
     engine_status = Column(String, nullable=True)
     fuel_level = Column(Float, nullable=True)
     odometer = Column(Float, nullable=True)

@@ -36,8 +36,13 @@
                     <div class="input-group">
                         <input type="password" id="driver-pwd" placeholder="Password" class="premium-input">
                     </div>
+                    <div class="input-group">
+                        <select id="driver-vid-select" class="premium-input">
+                            <option value="">Loading vehicles...</option>
+                        </select>
+                    </div>
                     <button class="btn-premium-driver" onclick="loginAs('driver')">
-                        <span class="btn-icon">🚗</span> Login to TN14-4289
+                        <span class="btn-icon">🚗</span> Login to Vehicle
                     </button>
                 </div>
             </div>
@@ -83,6 +88,7 @@
                     <div style="font-size: 24px; margin-top: 20px;">ID: <span id="driver-my-vid" style="color: var(--accent);"></span></div>
                     <div style="margin-top: 10px; font-size: 18px;">Status: <span id="driver-my-status">-</span></div>
                     <div style="margin-top: 10px; font-size: 18px;">Speed: <span id="driver-my-speed">0</span> km/h</div>
+                    <div style="margin-top: 10px; font-size: 16px;">Accel: <span id="driver-my-accel">-</span> m/s²</div>
                     <div style="margin-top: 10px; font-size: 16px;">Fuel Level: <span id="driver-my-fuel">-</span></div>
                     <div style="margin-top: 10px; font-size: 16px;">Engine: <span id="driver-my-engine">-</span></div>
                     <div style="margin-top: 10px; font-size: 16px;">Location: <span id="driver-my-location">-</span></div>
@@ -156,15 +162,19 @@
         <!-- VEHICLES VIEW -->
         <section id="view-vehicles" class="view-section">
             <div class="panel">
-                <h3>Vehicle Fleet</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; border: none; padding: 0;">Vehicle Fleet</h3>
+                    <button class="btn btn-primary" onclick="promptAddVehicle()">+ Add Vehicle</button>
+                </div>
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Vehicle ID</th>
                             <th>Status</th>
-                            <th>Risk Level</th>
                             <th>Score</th>
                             <th>Speed</th>
+                            <th>Accel</th>
+                            <th>Fuel</th>
                             <th>Location</th>
                         </tr>
                     </thead>

@@ -193,8 +193,11 @@ def inject(action: str, veh_id: str = "TN14-4289"):
         inject_queue.append({"veh_id": veh_id, "type": "CRASH"})
     elif action == "START":
         if veh_id in sim_vehicles:
-            sim_vehicles[veh_id]["engine"] = "ON"
-            sim_vehicles[veh_id]["target_speed"] = 50.0
+            if sim_vehicles[veh_id]["engine"] == "OFF":
+                sim_vehicles[veh_id]["engine"] = "ON"
+                sim_vehicles[veh_id]["target_speed"] = 50.0
+            else:
+                return {"status": "ignored", "message": "Vehicle is already started"}
     elif action == "STOP":
         if veh_id in sim_vehicles:
             sim_vehicles[veh_id]["target_speed"] = 0.0

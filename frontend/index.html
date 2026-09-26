@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Loading...</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for graphs if needed -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-modal">
+        <div class="login-glass-panel">
+            <div class="login-header">
+                <h2 class="login-title">Welcome to <br><span id="login-brand" class="gradient-text">Loading...</span></h2>
+                <p class="login-subtitle">Connected Vehicle Intelligence Platform</p>
+            </div>
+            
+            <div class="login-form">
+                <div class="login-role-section">
+                    <button class="btn-premium-manager" onclick="loginAs('manager')">
+                        <span class="btn-icon">🛡️</span> Login as Fleet Manager
+                    </button>
+                </div>
+                
+                <div class="login-divider">
+                    <span>OR DRIVER LOGIN</span>
+                </div>
+                
+                <div class="driver-inputs">
+                    <div class="input-group">
+                        <input type="text" id="driver-id" placeholder="Enter Driver ID (e.g. D1)" class="premium-input">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="driver-pwd" placeholder="Password" class="premium-input">
+                    </div>
+                    <button class="btn-premium-driver" onclick="loginAs('driver')">
+                        <span class="btn-icon">🚗</span> Login to TN14-4289
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative background elements -->
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+    </div>
+
+    <!-- DRIVER NAV -->
+    <nav class="sidebar driver-only" id="driver-nav" style="display: none;">
+        <h1 class="brand-name brand-text">Loading...</h1>
+        <ul class="nav-links">
+            <li class="active" data-target="driver-dashboard">My Vehicle</li>
+        </ul>
+    </nav>
+
+    <!-- MANAGER NAV -->
+    <nav class="sidebar manager-only" id="manager-nav" style="display: none;">
+        <h1 class="brand-name brand-text">Loading...</h1>
+        <ul class="nav-links">
+            <li class="active" data-target="dashboard">Dashboard</li>
+            <li data-target="vehicles">Vehicles</li>
+            <li data-target="incidents">Incidents & Events</li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <header>
+            <h2 id="section-title">Dashboard</h2>
+            <div class="header-right">
+                <span id="role-display" style="color: var(--text-muted); margin-right: 20px;"></span>
+                <span class="status-indicator"></span> Live Monitoring Active
+                <button class="btn btn-secondary" style="padding: 6px 12px; margin-left: 10px;" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <!-- DRIVER VIEW -->
+        <section id="view-driver-dashboard" class="view-section">
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Vehicle Status</h3>
+                    <div style="font-size: 24px; margin-top: 20px;">ID: <span id="driver-my-vid" style="color: var(--accent);"></span></div>
+                    <div style="margin-top: 10px; font-size: 18px;">Status: <span id="driver-my-status">-</span></div>
+                    <div style="margin-top: 10px; font-size: 18px;">Speed: <span id="driver-my-speed">0</span> km/h</div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+                        <h4>Simulator Control</h4>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Trigger faults and events to test the telemetry pipeline.</p>
+                        <div class="control-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn btn-warning" onclick="injectScenario('SPEEDING')">Inject Speeding</button>
+                            <button class="btn btn-warning" onclick="injectScenario('HARSH_BRAKING')">Inject Harsh Braking</button>
+                            <button class="btn btn-warning" onclick="injectScenario('HARSH_ACCEL')">Inject Harsh Accel</button>
+                            <button class="btn btn-danger" onclick="injectScenario('CRASH')">Trigger Possible Crash</button>
+                            <button class="btn btn-secondary" onclick="injectScenario('DUPLICATE')">Inject Duplicate Data</button>
+                            <button class="btn btn-secondary" onclick="injectScenario('OUT_OF_ORDER')">Inject Out-of-Order</button>
+                            <button class="btn btn-secondary" onclick="injectScenario('INVALID')">Inject Invalid Data</button>
+                            <button class="btn btn-secondary" onclick="injectScenario('GAP_START')">Start Data Gap</button>
+                            <button class="btn btn-primary" onclick="injectScenario('GAP_END')" style="grid-column: span 2;">End Data Gap</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3>My Alerts</h3>
+                    <ul class="event-list" id="driver-alerts-list">
+                        <li>No alerts.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view-section active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Vehicles</h3>
+                    <p id="stat-total">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Vehicles</h3>
+                    <p id="stat-active">0</p>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Safety Events</h3>
+                    <p id="stat-events">0</p>
+                </div>
+                <div class="stat-card critical">
+                    <h3>Possible Incidents</h3>
+                    <p id="stat-incidents">0</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>Telemetry Health</h3>
+                    <div class="health-stats">
+                        <div><span>Processed:</span> <span id="health-processed">0</span></div>
+                        <div><span>Duplicates Rejected:</span> <span id="health-duplicates">0</span></div>
+                        <div><span>Late Handled:</span> <span id="health-late">0</span></div>
+                        <div><span>Invalid Dropped:</span> <span id="health-invalid">0</span></div>
+                        <div><span>Telemetry Gaps:</span> <span id="health-gaps">0</span></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3>Recent Safety Events</h3>
+                    <ul class="event-list" id="recent-events-list">
+                        <li>No events yet.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- VEHICLES VIEW -->
+        <section id="view-vehicles" class="view-section">
+            <div class="panel">
+                <h3>Vehicle Fleet</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Status</th>
+                            <th>Risk Level</th>
+                            <th>Score</th>
+                            <th>Speed</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehicle-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- INCIDENTS VIEW -->
+        <section id="view-incidents" class="view-section">
+            <div class="panel critical-panel">
+                <h3>Active Incidents</h3>
+                <div class="incident-grid" id="incident-list">
+                    <!-- Incidents injected here -->
+                </div>
+            </div>
+
+            <div id="incident-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-btn">&times;</span>
+                    <h3>Incident Details</h3>
+                    <div id="modal-details"></div>
+                    <h4>Telemetry Timeline</h4>
+                    <ul class="timeline" id="incident-timeline"></ul>
+                </div>
+            </div>
+        </section>
+
+
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

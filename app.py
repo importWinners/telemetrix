@@ -201,6 +201,8 @@ def inject(action: str, veh_id: str = "TN14-4289"):
     elif action == "STOP":
         if veh_id in sim_vehicles:
             sim_vehicles[veh_id]["target_speed"] = 0.0
+            sim_vehicles[veh_id]["speed"] = 0.0
+            sim_vehicles[veh_id]["engine"] = "OFF"
     else:
         inject_queue.append({"veh_id": veh_id, "type": action.upper(), "ticks": 3})
     

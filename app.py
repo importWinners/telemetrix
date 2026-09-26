@@ -72,6 +72,22 @@ def generate_telemetry(veh_id):
         state["accel"] = 0.0
     state["prev_speed"] = state["speed"]
     
+    if "local_alerts" not in state:
+        state["local_alerts"] = []
+        
+    speed = state["speed"]
+    if speed > 100:
+        state["local_alerts"].insert(0, {"description": f"Extreme Speeding at {speed} km/h", "severity": "CRITICAL", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+    elif speed > 80:
+        state["local_alerts"].insert(0, {"description": f"Speeding at {speed} km/h", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+        
+    if state["accel"] < -5.0:
+        state["local_alerts"].insert(0, {"description": f"Harsh braking: {state['accel']} m/s²", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+    elif state["accel"] > 3.0:
+        state["local_alerts"].insert(0, {"description": f"Harsh acceleration: {state['accel']} m/s²", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+        
+    state["local_alerts"] = state["local_alerts"][:10]
+    
     return {
         "message_id": f"MSG_{uuid.uuid4().hex[:8]}",
         "vehicle_id": veh_id,
@@ -251,7 +267,8 @@ def get_driver_state(veh_id: str):
         "fuel_level": state["fuel"],
         "engine_status": state["engine"],
         "last_latitude": state["lat"],
-        "last_longitude": state["lon"]
+        "last_longitude": state["lon"],
+        "local_alerts": state.get("local_alerts", [])
     }
 
 from pydantic import BaseModel

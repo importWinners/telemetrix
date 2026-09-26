@@ -147,10 +147,8 @@ async function updateDriverView() {
         document.getElementById('driver-my-location').innerText = `${me.last_latitude ? me.last_latitude.toFixed(4) : '-'}, ${me.last_longitude ? me.last_longitude.toFixed(4) : '-'}`;
     }
 
-    // Fetch alerts
-    const resE = await fetch(`${API_BASE}/events`);
-    const events = await resE.json();
-    const myEvents = events.filter(e => e.vehicle_id === driverVid);
+    // Use locally generated alerts (instant feedback for driver, even during network gaps)
+    const myEvents = me.local_alerts || [];
     
     const list = document.getElementById('driver-alerts-list');
     list.innerHTML = '';

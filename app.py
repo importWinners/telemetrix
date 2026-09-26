@@ -33,6 +33,7 @@ sim_vehicles = {
     } for i in range(5)
 }
 inject_queue = []
+gap_buffer = {}
 
 def generate_telemetry(veh_id):
     state = sim_vehicles[veh_id]
@@ -58,6 +59,12 @@ def generate_telemetry(veh_id):
     state["odometer"] = round(state["odometer"] + state["speed"] * (1 / 3600.0), 1)
     state["fuel"] = round(max(0, state["fuel"] - 0.005), 1)
     
+    if "prev_speed" in state:
+        state["accel"] = round((state["speed"] - state["prev_speed"]) / 3.6, 2)
+    else:
+        state["accel"] = 0.0
+    state["prev_speed"] = state["speed"]
+    
     return {
         "message_id": f"MSG_{uuid.uuid4().hex[:8]}",
         "vehicle_id": veh_id,
@@ -78,9 +85,7 @@ async def sim_loop():
             for veh_id in list(sim_vehicles.keys()):
                 if veh_id not in sim_vehicles: continue
                 injections = [i for i in inject_queue if i['veh_id'] == veh_id or i['veh_id'] == 'ALL']
-                if any(i['type'] == 'GAP' for i in injections):
-                    continue
-                    
+                
                 payload = generate_telemetry(veh_id)
                 
                 for inj in injections:
@@ -104,12 +109,24 @@ async def sim_loop():
                     elif inj['type'] == 'OUT_OF_ORDER':
                         payload['vehicle_timestamp'] = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
                 
-                process_telemetry(db, payload)
-                
-                if any(i['type'] == 'DUPLICATE' for i in injections):
+                is_gap = any(i['type'] == 'GAP' for i in injections)
+                if is_gap:
+                    if veh_id not in gap_buffer:
+                        gap_buffer[veh_id] = []
+                    gap_buffer[veh_id].append(payload)
+                else:
+                    if veh_id in gap_buffer and gap_buffer[veh_id]:
+                        for buffered_payload in gap_buffer[veh_id]:
+                            process_telemetry(db, buffered_payload)
+                        gap_buffer[veh_id] = []
+                        
                     process_telemetry(db, payload)
                     
-            inject_queue[:] = [i for i in inject_queue if i['type'] == 'GAP']
+                    if any(i['type'] == 'DUPLICATE' for i in injections):
+                        process_telemetry(db, payload)
+                    
+            inject_queue[:] = [i for i in inject_queue if i['type'] != 'DUPLICATE' and i['type'] != 'OUT_OF_ORDER' and i['type'] != 'SPEEDING' and i['type'] != 'HARSH_BRAKING' and i['type'] != 'HARSH_ACCEL' and i['type'] != 'CRASH' and i['type'] != 'CRASH_STOP' and i['type'] != 'INVALID']
+
         except Exception as e:
             print(f"Sim loop error: {e}")
         finally:
@@ -198,6 +215,21 @@ def get_drivers(db: Session = Depends(get_db)):
             "safety_score": v.safety_score
         })
     return drivers
+
+@app.get("/api/driver/state/{veh_id}")
+def get_driver_state(veh_id: str):
+    if veh_id not in sim_vehicles:
+        raise HTTPException(404, "Not found")
+    state = sim_vehicles[veh_id]
+    return {
+        "status": "Normal",
+        "last_speed": state["speed"],
+        "last_acceleration": state.get("accel", 0.0),
+        "fuel_level": state["fuel"],
+        "engine_status": state["engine"],
+        "last_latitude": state["lat"],
+        "last_longitude": state["lon"]
+    }
 
 from pydantic import BaseModel
 class NewVehicle(BaseModel):

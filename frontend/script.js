@@ -126,10 +126,10 @@ async function pollData() {
 }
 
 async function updateDriverView() {
-    // Fetch my vehicle status
-    const resV = await fetch(`${API_BASE}/vehicles`);
-    const vehicles = await resV.json();
-    const me = vehicles.find(v => v.vehicle_id === driverVid);
+    // Fetch vehicle state directly from simulator for driver view
+    const res = await fetch(`${API_BASE}/driver/state/${driverVid}`);
+    if (!res.ok) return;
+    const me = await res.json();
     if (me) {
         document.getElementById('driver-my-status').innerText = me.status;
         document.getElementById('driver-my-status').className = `badge badge-${me.status === 'Normal' ? 'normal' : me.status === 'Warning' ? 'warning' : 'critical'}`;

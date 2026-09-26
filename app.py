@@ -75,7 +75,7 @@ async def sim_loop():
     while True:
         try:
             db = SessionLocal()
-            for veh_id in sim_vehicles:
+            for veh_id in list(sim_vehicles.keys()):
                 if veh_id not in sim_vehicles: continue
                 injections = [i for i in inject_queue if i['veh_id'] == veh_id or i['veh_id'] == 'ALL']
                 if any(i['type'] == 'GAP' for i in injections):

@@ -295,8 +295,10 @@ async def driver_login(vehicle_id: str, request: Request, db: Session = Depends(
     db.commit()
     
     if vehicle_id in sim_vehicles:
-        sim_vehicles[vehicle_id]["engine"] = "ON"
-        sim_vehicles[vehicle_id]["target_speed"] = 40.0
+        sim_vehicles[vehicle_id]["engine"] = "OFF"
+        sim_vehicles[vehicle_id]["target_speed"] = 0.0
+        sim_vehicles[vehicle_id]["speed"] = 0.0
+        sim_vehicles[vehicle_id]["accel"] = 0.0
         
     return {"status": "success", "message": f"Driver {driver_id} logged into {vehicle_id}"}
 
@@ -310,6 +312,8 @@ def driver_logout(vehicle_id: str, db: Session = Depends(get_db)):
     if vehicle_id in sim_vehicles:
         sim_vehicles[vehicle_id]["engine"] = "OFF"
         sim_vehicles[vehicle_id]["target_speed"] = 0.0
+        sim_vehicles[vehicle_id]["speed"] = 0.0
+        sim_vehicles[vehicle_id]["accel"] = 0.0
         
     return {"status": "success"}
 

@@ -140,9 +140,9 @@ async function updateDriverView() {
     if (me) {
         document.getElementById('driver-my-status').innerText = me.status;
         document.getElementById('driver-my-status').className = `badge badge-${me.status === 'Normal' ? 'normal' : me.status === 'Warning' ? 'warning' : 'critical'}`;
-        document.getElementById('driver-my-speed').innerText = me.last_speed ? me.last_speed.toFixed(1) : '0';
-        document.getElementById('driver-my-accel').innerText = me.last_acceleration ? me.last_acceleration.toFixed(2) : '0.00';
-        document.getElementById('driver-my-fuel').innerText = me.fuel_level ? me.fuel_level.toFixed(1) + '%' : '-';
+        document.getElementById('driver-my-speed').innerText = me.last_speed !== null && me.last_speed !== undefined ? Math.round(me.last_speed) : '0';
+        document.getElementById('driver-my-accel').innerText = me.last_acceleration !== null && me.last_acceleration !== undefined ? Math.round(me.last_acceleration) : '0';
+        document.getElementById('driver-my-fuel').innerText = me.fuel_level !== null && me.fuel_level !== undefined ? Math.round(me.fuel_level) + '%' : '-';
         document.getElementById('driver-my-engine').innerText = me.engine_status || '-';
         document.getElementById('driver-my-location').innerText = `${me.last_latitude ? me.last_latitude.toFixed(4) : '-'}, ${me.last_longitude ? me.last_longitude.toFixed(4) : '-'}`;
     }
@@ -212,9 +212,9 @@ async function updateVehicles() {
             <td>${driverDisplay}</td>
             <td><span class="badge ${badgeClass}">${v.status}</span></td>
             <td>${Math.round(v.safety_score)}</td>
-            <td>${v.last_speed !== null && v.last_speed !== undefined ? v.last_speed.toFixed(1) : 0} km/h</td>
-            <td>${v.last_acceleration !== null && v.last_acceleration !== undefined ? v.last_acceleration.toFixed(2) : '0.00'} m/s²</td>
-            <td>${v.fuel_level !== null && v.fuel_level !== undefined ? v.fuel_level.toFixed(1) + '%' : '-'}</td>
+            <td>${v.last_speed !== null && v.last_speed !== undefined ? Math.round(v.last_speed) : 0} km/h</td>
+            <td>${v.last_acceleration !== null && v.last_acceleration !== undefined ? Math.round(v.last_acceleration) : 0} m/s²</td>
+            <td>${v.fuel_level !== null && v.fuel_level !== undefined ? Math.round(v.fuel_level) + '%' : '-'}</td>
             <td>${v.last_latitude !== null && v.last_latitude !== undefined ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude !== null && v.last_longitude !== undefined ? v.last_longitude.toFixed(4) : '-'}</td>
         `;
         tbody.appendChild(tr);
@@ -235,7 +235,7 @@ async function updateDrivers() {
                 <td><strong>${d.driver_id}</strong></td>
                 <td><span class="badge badge-normal">${d.vehicle_id}</span></td>
                 <td>${d.vehicle_type}</td>
-                <td>${d.historical_mean_speed ? d.historical_mean_speed.toFixed(1) : '0.0'} km/h</td>
+                <td>${d.historical_mean_speed ? Math.round(d.historical_mean_speed) : '0'} km/h</td>
                 <td>${Math.round(d.safety_score)}</td>
             `;
             tbody.appendChild(tr);
@@ -312,7 +312,7 @@ async function viewIncident(id) {
         const time = new Date(t.vehicle_timestamp).toLocaleTimeString();
         const li = document.createElement('li');
         
-        let text = `${time} - Speed: ${t.speed.toFixed(1)} km/h`;
+        let text = `${time} - Speed: ${Math.round(t.speed)} km/h`;
         
         if (prevSpeed !== null && prevSpeed > 20 && t.speed === 0) {
             li.classList.add('timeline-critical');

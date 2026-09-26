@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: telemetrix-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0

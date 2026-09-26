@@ -202,17 +202,16 @@ def get_vehicles(db: Session = Depends(get_db)):
 
 @app.get("/api/drivers")
 def get_drivers(db: Session = Depends(get_db)):
-    vehicles = db.query(Vehicle).filter(Vehicle.current_driver_id != None).all()
+    profiles = db.query(DriverProfile).all()
     drivers = []
-    for v in vehicles:
-        profile_id = f"{v.current_driver_id}_{v.vehicle_type}"
-        profile = db.query(DriverProfile).filter(DriverProfile.profile_id == profile_id).first()
+    for p in profiles:
+        v = db.query(Vehicle).filter(Vehicle.current_driver_id == p.driver_id).first()
         drivers.append({
-            "driver_id": v.current_driver_id,
-            "vehicle_id": v.vehicle_id,
-            "vehicle_type": v.vehicle_type,
-            "historical_mean_speed": profile.historical_mean_speed if profile else 0.0,
-            "safety_score": v.safety_score
+            "driver_id": p.driver_id,
+            "vehicle_id": v.vehicle_id if v else "Not Assigned",
+            "vehicle_type": p.vehicle_type,
+            "historical_mean_speed": p.historical_mean_speed,
+            "safety_score": v.safety_score if v else 100.0
         })
     return drivers
 
@@ -235,6 +234,20 @@ from pydantic import BaseModel
 class NewVehicle(BaseModel):
     vehicle_id: str
     vehicle_type: str = "Standard"
+
+class NewDriver(BaseModel):
+    driver_id: str
+    vehicle_type: str = "Standard"
+
+@app.post("/api/drivers")
+def create_driver(new_driver: NewDriver, db: Session = Depends(get_db)):
+    profile_id = f"{new_driver.driver_id}_{new_driver.vehicle_type}"
+    profile = db.query(DriverProfile).filter(DriverProfile.profile_id == profile_id).first()
+    if not profile:
+        profile = DriverProfile(profile_id=profile_id, driver_id=new_driver.driver_id, vehicle_type=new_driver.vehicle_type)
+        db.add(profile)
+        db.commit()
+    return {"status": "success", "driver_id": new_driver.driver_id}
 
 @app.post("/api/vehicles")
 def create_vehicle(new_veh: NewVehicle, db: Session = Depends(get_db)):

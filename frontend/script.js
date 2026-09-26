@@ -179,7 +179,15 @@ async function updateStats() {
 
 async function updateVehicles() {
     const res = await fetch(`${API_BASE}/vehicles`);
-    const vehicles = await res.json();
+    let vehicles = await res.json();
+    
+    const searchVal = document.getElementById('vehicle-search').value.toLowerCase();
+    if (searchVal) {
+        vehicles = vehicles.filter(v => 
+            v.vehicle_id.toLowerCase().includes(searchVal) || 
+            (v.current_driver_id && v.current_driver_id.toLowerCase().includes(searchVal))
+        );
+    }
 
     const tbody = document.getElementById('vehicle-table-body');
     tbody.innerHTML = '';
@@ -188,16 +196,19 @@ async function updateVehicles() {
         let badgeClass = 'badge-normal';
         if (v.status === 'Warning') badgeClass = 'badge-warning';
         if (v.status === 'Critical') badgeClass = 'badge-critical';
+        
+        const driverDisplay = v.current_driver_id ? v.current_driver_id : '<span style="color:var(--text-muted)">No driver</span>';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${v.vehicle_id}</strong></td>
+            <td>${driverDisplay}</td>
             <td><span class="badge ${badgeClass}">${v.status}</span></td>
             <td>${Math.round(v.safety_score)}</td>
-            <td>${v.last_speed ? v.last_speed.toFixed(1) : 0} km/h</td>
-            <td>${v.last_acceleration ? v.last_acceleration.toFixed(2) : '0.00'} m/s²</td>
-            <td>${v.fuel_level ? v.fuel_level.toFixed(1) + '%' : '-'}</td>
-            <td>${v.last_latitude ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude ? v.last_longitude.toFixed(4) : '-'}</td>
+            <td>${v.last_speed !== null && v.last_speed !== undefined ? v.last_speed.toFixed(1) : 0} km/h</td>
+            <td>${v.last_acceleration !== null && v.last_acceleration !== undefined ? v.last_acceleration.toFixed(2) : '0.00'} m/s²</td>
+            <td>${v.fuel_level !== null && v.fuel_level !== undefined ? v.fuel_level.toFixed(1) + '%' : '-'}</td>
+            <td>${v.last_latitude !== null && v.last_latitude !== undefined ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude !== null && v.last_longitude !== undefined ? v.last_longitude.toFixed(4) : '-'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -342,3 +353,20 @@ async function promptAddVehicle() {
         console.error("Failed to add vehicle", e);
     }
 }
+
+async function promptAddDriver() {
+    const did = prompt("Enter new Driver ID (e.g. D99):");
+    if (!did) return;
+    try {
+        await fetch(`${API_BASE}/drivers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driver_id: did })
+        });
+        alert(`Driver ${did} added successfully!`);
+        updateDrivers();
+    } catch (e) {
+        console.error("Failed to add driver", e);
+    }
+}
+

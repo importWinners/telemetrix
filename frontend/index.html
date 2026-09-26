@@ -168,17 +168,13 @@
                     <button class="btn btn-primary" onclick="promptAddVehicle()">+ Add Vehicle</button>
                 </div>
                 <div class="vehicles-controls" style="margin-top: 10px; display: flex; gap: 12px; align-items: center;">
-                    <input type="text" id="vehicle-search" placeholder="Search by Vehicle ID or Driver" class="premium-input" style="flex:1;"/>
-                    <select id="vehicle-sort" class="premium-input" style="width:150px;">
-                        <option value="vehicle_id">Vehicle Number</option>
-                        <option value="risk">Risk Level</option>
-                        <option value="score">Score</option>
-                    </select>
+                    <input type="text" id="vehicle-search" placeholder="Search by Vehicle ID or Driver ID" class="premium-input" style="flex:1;" onkeyup="updateVehicles()"/>
                 </div>
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Vehicle ID</th>
+                            <th>Driver ID</th>
                             <th>Status</th>
                             <th>Score</th>
                             <th>Speed</th>
@@ -203,7 +199,10 @@
         <!-- DRIVERS VIEW -->
         <section id="view-drivers" class="view-section">
             <div class="panel">
-                <h3>Driver Profiles</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; border: none; padding: 0;">Driver Profiles</h3>
+                    <button class="btn btn-primary" onclick="promptAddDriver()">+ Add Driver</button>
+                </div>
                 <table class="data-table">
                     <thead>
                         <tr>

@@ -83,8 +83,29 @@ class TelemetryError(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     details = Column(String)
 
+from sqlalchemy import text
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    
+    # Auto-migration for SQLite to handle newly added columns without wiping DB
+    try:
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE vehicles ADD COLUMN last_acceleration FLOAT"))
+            except: pass
+            
+            try:
+                conn.execute(text("ALTER TABLE vehicles ADD COLUMN current_driver_id VARCHAR"))
+            except: pass
+            
+            try:
+                conn.execute(text("ALTER TABLE vehicles ADD COLUMN vehicle_type VARCHAR DEFAULT 'Standard'"))
+            except: pass
+            
+            conn.commit()
+    except Exception as e:
+        print(f"Migration error: {e}")
 
 def get_db():
     db = SessionLocal()

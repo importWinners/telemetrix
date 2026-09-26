@@ -205,9 +205,16 @@ async function updateVehicles() {
         let statusDisplay = `<span class="badge ${badgeClass}">${v.status}</span>`;
         let scoreDisplay = Math.round(v.safety_score);
 
+        let speed = v.last_speed !== null && v.last_speed !== undefined ? Math.round(v.last_speed) : 0;
+        let accel = v.last_acceleration !== null && v.last_acceleration !== undefined ? Math.round(v.last_acceleration) : 0;
+        let fuel = v.fuel_level !== null && v.fuel_level !== undefined ? Math.round(v.fuel_level) + '%' : '-';
+        
         if (!v.current_driver_id) {
             statusDisplay = '<span style="color:var(--text-muted)">-</span>';
             scoreDisplay = '<span style="color:var(--text-muted)">-</span>';
+            speed = 0;
+            accel = 0;
+            fuel = '0%';
         }
 
         const driverDisplay = v.current_driver_id ? v.current_driver_id : '<span style="color:var(--text-muted)">No driver</span>';
@@ -218,9 +225,9 @@ async function updateVehicles() {
             <td>${driverDisplay}</td>
             <td>${statusDisplay}</td>
             <td>${scoreDisplay}</td>
-            <td>${v.last_speed !== null && v.last_speed !== undefined ? Math.round(v.last_speed) : 0} km/h</td>
-            <td>${v.last_acceleration !== null && v.last_acceleration !== undefined ? Math.round(v.last_acceleration) : 0} m/s²</td>
-            <td>${v.fuel_level !== null && v.fuel_level !== undefined ? Math.round(v.fuel_level) + '%' : '-'}</td>
+            <td>${speed} km/h</td>
+            <td>${accel} m/s²</td>
+            <td>${fuel}</td>
             <td style="cursor:pointer; color:var(--primary)" onclick="showVehiclePanel('${v.vehicle_id}')">${v.last_latitude !== null && v.last_latitude !== undefined ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude !== null && v.last_longitude !== undefined ? v.last_longitude.toFixed(4) : '-'}</td>
         `;
         tbody.appendChild(tr);
@@ -256,13 +263,55 @@ async function updateDrivers() {
                 <td><strong>${d.driver_id}</strong></td>
                 <td><span class="badge badge-normal">${d.vehicle_id}</span></td>
                 <td>${d.vehicle_type}</td>
-                <td>${d.historical_mean_speed ? Math.round(d.historical_mean_speed) : '0'} km/h</td>
                 <td>${Math.round(d.safety_score)}</td>
+                <td style="text-align:center; cursor:pointer;" ondblclick="showDriverPanel('${d.driver_id}', '${d.vehicle_id}')">
+                    <span style="font-size: 18px; color: var(--primary);">➔</span>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (e) {
         console.error("Failed to load drivers", e);
+    }
+}
+
+async function showDriverPanel(did, vid) {
+    document.getElementById('driver-details').style.display = 'block';
+    const content = document.getElementById('driver-details-content');
+    content.innerHTML = `<div><strong>Loading details...</strong></div>`;
+    
+    try {
+        const eventsRes = await fetch(`${API_BASE}/events`);
+        const allEvents = await eventsRes.json();
+        
+        const myEvents = allEvents.filter(e => e.driver_id === did);
+        
+        const v = vehicles.find(x => x.vehicle_id === vid) || {};
+        
+        content.innerHTML = `
+            <div><strong>Driver ID:</strong> ${did}</div>
+            <div><strong>Vehicle Assigned:</strong> ${vid}</div>
+            <div><strong>Current Location:</strong> ${v.last_latitude ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude ? v.last_longitude.toFixed(4) : '-'}</div>
+            <div><strong>Current Speed:</strong> ${v.last_speed ? Math.round(v.last_speed) : 0} km/h</div>
+            <div><strong>Current Status:</strong> ${v.status || '-'}</div>
+            <div><strong>Safety Score:</strong> ${v.safety_score ? Math.round(v.safety_score) : '-'}</div>
+        `;
+        
+        const list = document.getElementById('driver-specific-events');
+        list.innerHTML = '';
+        if (myEvents.length === 0) {
+            list.innerHTML = '<li>No recent events for this driver.</li>';
+        } else {
+            myEvents.forEach(e => {
+                const li = document.createElement('li');
+                li.className = e.severity === 'CRITICAL' ? 'evt-critical' : 'evt-warning';
+                const time = new Date(e.timestamp).toLocaleTimeString();
+                li.innerHTML = `<strong>${time}</strong> - ${e.description}`;
+                list.appendChild(li);
+            });
+        }
+    } catch (e) {
+        console.error("Error loading driver panel", e);
     }
 }
 

@@ -166,6 +166,14 @@
                     <h3 style="margin: 0; border: none; padding: 0;">Vehicle Fleet</h3>
                     <button class="btn btn-primary" onclick="promptAddVehicle()">+ Add Vehicle</button>
                 </div>
+                <div class="vehicles-controls" style="margin-top: 10px; display: flex; gap: 12px; align-items: center;">
+                    <input type="text" id="vehicle-search" placeholder="Search by Vehicle ID or Driver" class="premium-input" style="flex:1;"/>
+                    <select id="vehicle-sort" class="premium-input" style="width:150px;">
+                        <option value="vehicle_id">Vehicle Number</option>
+                        <option value="risk">Risk Level</option>
+                        <option value="score">Score</option>
+                    </select>
+                </div>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -181,6 +189,13 @@
                     <tbody id="vehicle-table-body">
                     </tbody>
                 </table>
+            </div>
+            
+            <div id="vehicle-details" class="panel" style="margin-top: 24px; display: none;">
+                <h3>Vehicle Details</h3>
+                <div id="vehicle-details-content" class="details-grid" style="margin-top: 16px;">
+                    <!-- Vehicle details will be injected here when a row is clicked -->
+                </div>
             </div>
         </section>
 

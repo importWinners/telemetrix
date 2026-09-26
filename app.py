@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uvicorn
 from database import init_db, get_db, Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError, SessionLocal, DriverProfile
-from processor import process_telemetry
+from processor import process_telemetry, log_error
 from config import app_name
 import asyncio
 import random
@@ -128,6 +128,9 @@ async def sim_loop():
                     gap_buffer[veh_id].append(payload)
                 else:
                     if veh_id in gap_buffer and gap_buffer[veh_id]:
+                        gap_duration = len(gap_buffer[veh_id])
+                        if gap_duration > 0:
+                            log_error(db, veh_id, gap_buffer[veh_id][-1]["message_id"], "GAP", f"Telemetry gap of {gap_duration} seconds resolved")
                         for buffered_payload in gap_buffer[veh_id]:
                             process_telemetry(db, buffered_payload)
                         gap_buffer[veh_id] = []

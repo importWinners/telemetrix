@@ -277,9 +277,8 @@ async function injectScenario(action) {
         }
         const res = await fetch(url, { method: 'POST' });
         const data = await res.json();
-        alert(`Injected scenario: ${data.action} on ${data.veh_id}`);
+        // Silently succeed
     } catch (e) {
-        alert("Failed to inject scenario.");
-        console.error(e);
+        console.error("Failed to inject scenario.", e);
     }
 }

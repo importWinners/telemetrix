@@ -183,6 +183,22 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 def get_vehicles(db: Session = Depends(get_db)):
     return db.query(Vehicle).all()
 
+@app.get("/api/drivers")
+def get_drivers(db: Session = Depends(get_db)):
+    vehicles = db.query(Vehicle).filter(Vehicle.current_driver_id != None).all()
+    drivers = []
+    for v in vehicles:
+        profile_id = f"{v.current_driver_id}_{v.vehicle_type}"
+        profile = db.query(DriverProfile).filter(DriverProfile.profile_id == profile_id).first()
+        drivers.append({
+            "driver_id": v.current_driver_id,
+            "vehicle_id": v.vehicle_id,
+            "vehicle_type": v.vehicle_type,
+            "historical_mean_speed": profile.historical_mean_speed if profile else 0.0,
+            "safety_score": v.safety_score
+        })
+    return drivers
+
 from pydantic import BaseModel
 class NewVehicle(BaseModel):
     vehicle_id: str

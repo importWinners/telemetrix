@@ -37,8 +37,8 @@
                         <input type="password" id="driver-pwd" placeholder="Password" class="premium-input">
                     </div>
                     <div class="input-group">
-                        <select id="driver-vid-select" class="premium-input">
-                            <option value="">Loading vehicles...</option>
+                        <select id="driver-vid-select" class="premium-input" required>
+                            <option value="" disabled selected>Select a Vehicle...</option>
                         </select>
                     </div>
                     <button class="btn-premium-driver" onclick="loginAs('driver')">
@@ -66,6 +66,7 @@
         <ul class="nav-links">
             <li class="active" data-target="dashboard">Dashboard</li>
             <li data-target="vehicles">Vehicles</li>
+            <li data-target="drivers">Drivers</li>
             <li data-target="incidents">Incidents & Events</li>
         </ul>
     </nav>
@@ -179,6 +180,26 @@
                         </tr>
                     </thead>
                     <tbody id="vehicle-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- DRIVERS VIEW -->
+        <section id="view-drivers" class="view-section">
+            <div class="panel">
+                <h3>Driver Profiles</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Driver ID</th>
+                            <th>Assigned Vehicle</th>
+                            <th>Vehicle Type</th>
+                            <th>Historical Mean Speed</th>
+                            <th>Safety Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="driver-table-body">
                     </tbody>
                 </table>
             </div>

@@ -32,6 +32,7 @@ async function loginAs(role) {
         const vtype = 'Alto';
         
         if (!did) return alert('Enter Driver ID');
+        if (!vid) return alert('Please select a Vehicle from the dropdown');
         
         // Log into vehicle on backend
         await fetch(`${API_BASE}/vehicles/${vid}/login`, {
@@ -113,7 +114,8 @@ async function pollData() {
                 updateStats(),
                 updateVehicles(),
                 updateEvents(),
-                updateIncidents()
+                updateIncidents(),
+                updateDrivers()
             ]);
         } else if (currentRole === 'driver') {
             await updateDriverView();
@@ -199,6 +201,30 @@ async function updateVehicles() {
         `;
         tbody.appendChild(tr);
     });
+}
+
+async function updateDrivers() {
+    try {
+        const res = await fetch(`${API_BASE}/drivers`);
+        const drivers = await res.json();
+        
+        const tbody = document.getElementById('driver-table-body');
+        tbody.innerHTML = '';
+        
+        drivers.forEach(d => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${d.driver_id}</strong></td>
+                <td><span class="badge badge-normal">${d.vehicle_id}</span></td>
+                <td>${d.vehicle_type}</td>
+                <td>${d.historical_mean_speed ? d.historical_mean_speed.toFixed(1) : '0.0'} km/h</td>
+                <td>${Math.round(d.safety_score)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("Failed to load drivers", e);
+    }
 }
 
 async function updateEvents() {

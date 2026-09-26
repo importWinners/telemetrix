@@ -240,12 +240,21 @@ class NewVehicle(BaseModel):
 def create_vehicle(new_veh: NewVehicle, db: Session = Depends(get_db)):
     vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == new_veh.vehicle_id).first()
     if not vehicle:
-        vehicle = Vehicle(vehicle_id=new_veh.vehicle_id, vehicle_type=new_veh.vehicle_type, status="Awaiting Driver")
+        vehicle = Vehicle(vehicle_id=new_veh.vehicle_id, vehicle_type=new_veh.vehicle_type)
         db.add(vehicle)
         db.commit()
     
-    # We DO NOT add it to sim_vehicles here anymore. 
-    # It will be added to the simulator only when a driver logs into it.
+    # Add to simulator so it starts sending data
+    if new_veh.vehicle_id not in sim_vehicles:
+        sim_vehicles[new_veh.vehicle_id] = {
+            "speed": 0.0,
+            "target_speed": 40.0,
+            "lat": 12.9716 + random.uniform(-0.05, 0.05),
+            "lon": 80.2450 + random.uniform(-0.05, 0.05),
+            "fuel": 100.0,
+            "odometer": 0.0,
+            "engine": "ON"
+        }
         
     return {"status": "success", "vehicle_id": new_veh.vehicle_id}
 
@@ -262,21 +271,7 @@ async def driver_login(vehicle_id: str, request: Request, db: Session = Depends(
         
     vehicle.current_driver_id = driver_id
     vehicle.vehicle_type = vehicle_type
-    vehicle.status = "Normal"
     db.commit()
-    
-    # Now that a driver has logged in, start simulating this vehicle
-    if vehicle_id not in sim_vehicles:
-        sim_vehicles[vehicle_id] = {
-            "speed": 0.0,
-            "target_speed": 40.0,
-            "lat": 12.9716 + random.uniform(-0.05, 0.05),
-            "lon": 80.2450 + random.uniform(-0.05, 0.05),
-            "fuel": 100.0,
-            "odometer": 0.0,
-            "engine": "ON"
-        }
-        
     return {"status": "success", "message": f"Driver {driver_id} logged into {vehicle_id}"}
 
 @app.get("/api/events")

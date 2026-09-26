@@ -72,7 +72,18 @@ def process_telemetry(db, data: dict):
     vehicle.fuel_level = data.get("fuel_level")
     vehicle.odometer = data.get("odometer")
     vehicle.last_timestamp = v_time
-    vehicle.status = "Normal"
+    
+    # Regenerate score slightly on every valid telemetry packet (e.g., +0.05 per tick)
+    if vehicle.safety_score < 100:
+        vehicle.safety_score = min(100.0, vehicle.safety_score + 0.05)
+        
+    # Derive status from score rather than hardcoding "Normal"
+    if vehicle.safety_score < 50:
+        vehicle.status = "Critical"
+    elif vehicle.safety_score < 80:
+        vehicle.status = "Warning"
+    else:
+        vehicle.status = "Normal"
 
     # Save telemetry
     save_telemetry(db, data, v_time, "Valid")

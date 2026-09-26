@@ -82,7 +82,7 @@ def generate_telemetry(veh_id):
         "speed": state["speed"],
         "odometer": state["odometer"],
         "diagnostic_codes": [],
-        "vehicle_timestamp": datetime.utcnow().isoformat()
+        "vehicle_timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()
     }
 
 async def sim_loop():
@@ -114,7 +114,7 @@ async def sim_loop():
                     elif inj['type'] == 'INVALID':
                         payload['speed'] = 500
                     elif inj['type'] == 'OUT_OF_ORDER':
-                        payload['vehicle_timestamp'] = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+                        payload['vehicle_timestamp'] = (datetime.utcnow() + timedelta(hours=5, minutes=30) - timedelta(minutes=5)).isoformat()
                 
                 is_gap = any(i['type'] == 'GAP' for i in injections)
                 if is_gap:

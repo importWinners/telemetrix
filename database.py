@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, Column, String, Float, Integer, DateTime, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
-from datetime import datetime
+from datetime import datetime, timedelta
 from config import DATABASE_URL
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -47,7 +47,7 @@ class Telemetry(Base):
     odometer = Column(Float)
     diagnostic_codes = Column(String) # JSON string
     vehicle_timestamp = Column(DateTime)
-    ingestion_timestamp = Column(DateTime, default=datetime.utcnow)
+    ingestion_timestamp = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     validation_status = Column(String, default="Valid")
 
 class SafetyEvent(Base):
@@ -80,7 +80,7 @@ class TelemetryError(Base):
     vehicle_id = Column(String, index=True)
     message_id = Column(String, index=True)
     error_type = Column(String) # DUPLICATE, LATE, INVALID, GAP
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.utcnow() + timedelta(hours=5, minutes=30))
     details = Column(String)
 
 from sqlalchemy import text

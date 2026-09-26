@@ -76,6 +76,8 @@ def process_telemetry(db, data: dict):
     # Regenerate score slightly on every valid telemetry packet (e.g., +0.05 per tick)
     if vehicle.safety_score < 100:
         vehicle.safety_score = min(100.0, vehicle.safety_score + 0.05)
+    if driver_profile and driver_profile.safety_score < 100:
+        driver_profile.safety_score = min(100.0, driver_profile.safety_score + 0.05)
         
     # Derive status from score rather than hardcoding "Normal"
     if vehicle.safety_score < 50:
@@ -143,6 +145,8 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
         vehicle.risk_level = "Critical"
         vehicle.status = "Critical"
         vehicle.safety_score = max(0, vehicle.safety_score - 3)
+        if driver_profile:
+            driver_profile.safety_score = max(0, driver_profile.safety_score - 3)
     # Normal Speeding check
     elif speed > SPEED_LIMIT_KMH and not should_throttle_event(db, veh_id, "SPEEDING", curr_time):
         evt = SafetyEvent(
@@ -159,6 +163,8 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
         vehicle.risk_level = "High Risk"
         vehicle.status = "Warning"
         vehicle.safety_score = max(0, vehicle.safety_score - 1)
+        if driver_profile:
+            driver_profile.safety_score = max(0, driver_profile.safety_score - 1)
 
     # Anomaly Detection (Behavioural difference) using DriverProfile
     if driver_profile and driver_profile.total_speed_readings > 10:
@@ -213,6 +219,8 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
                 )
                 db.add(evt)
                 vehicle.safety_score = max(0, vehicle.safety_score - 2)
+                if driver_profile:
+                    driver_profile.safety_score = max(0, driver_profile.safety_score - 2)
 
             elif accel > HARSH_ACCEL_THRESHOLD_MS2:
                 evt = SafetyEvent(
@@ -227,6 +235,8 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
                 )
                 db.add(evt)
                 vehicle.safety_score = max(0, vehicle.safety_score - 1.5)
+                if driver_profile:
+                    driver_profile.safety_score = max(0, driver_profile.safety_score - 1.5)
             
             # Possible Crash Detection
             # high speed -> sudden decel -> stopped + possible diag

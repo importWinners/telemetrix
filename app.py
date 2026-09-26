@@ -251,7 +251,7 @@ def get_drivers(db: Session = Depends(get_db)):
             "vehicle_id": v.vehicle_id if v else "Not Assigned",
             "vehicle_type": p.vehicle_type,
             "historical_mean_speed": p.historical_mean_speed,
-            "safety_score": v.safety_score if v else 100.0
+            "safety_score": p.safety_score
         })
     return drivers
 
@@ -312,6 +312,34 @@ def create_vehicle(new_veh: NewVehicle, db: Session = Depends(get_db)):
         
     return {"status": "success", "vehicle_id": new_veh.vehicle_id}
 
+@app.delete("/api/vehicles/{vehicle_id}")
+def delete_vehicle(vehicle_id: str, db: Session = Depends(get_db)):
+    vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(404, "Vehicle not found")
+    db.delete(vehicle)
+    db.commit()
+    if vehicle_id in sim_vehicles:
+        del sim_vehicles[vehicle_id]
+    return {"status": "success"}
+
+@app.delete("/api/drivers/{driver_id}")
+def delete_driver(driver_id: str, db: Session = Depends(get_db)):
+    profile = db.query(DriverProfile).filter(DriverProfile.driver_id == driver_id).first()
+    if not profile:
+        raise HTTPException(404, "Driver not found")
+    
+    # Also log them out of any vehicle
+    vehicle = db.query(Vehicle).filter(Vehicle.current_driver_id == driver_id).first()
+    if vehicle:
+        vehicle.current_driver_id = None
+        vehicle.safety_score = 100.0
+        vehicle.status = ""
+        
+    db.delete(profile)
+    db.commit()
+    return {"status": "success"}
+
 @app.post("/api/vehicles/{vehicle_id}/login")
 async def driver_login(vehicle_id: str, request: Request, db: Session = Depends(get_db)):
     data = await request.json()
@@ -325,6 +353,8 @@ async def driver_login(vehicle_id: str, request: Request, db: Session = Depends(
         
     vehicle.current_driver_id = driver_id
     vehicle.vehicle_type = vehicle_type
+    vehicle.safety_score = 100.0
+    vehicle.status = "Normal"
     db.commit()
     
     if vehicle_id in sim_vehicles:
@@ -340,6 +370,8 @@ def driver_logout(vehicle_id: str, db: Session = Depends(get_db)):
     vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == vehicle_id).first()
     if vehicle:
         vehicle.current_driver_id = None
+        vehicle.safety_score = 100.0
+        vehicle.status = ""
         db.commit()
         
     if vehicle_id in sim_vehicles:

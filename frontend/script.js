@@ -199,24 +199,56 @@ async function updateVehicles() {
 
     vehicles.forEach(v => {
         let badgeClass = 'badge-normal';
-        if (v.status === 'Warning') badgeClass = 'badge-warning';
-        if (v.status === 'Critical') badgeClass = 'badge-critical';
-        
-        const driverDisplay = v.current_driver_id ? v.current_driver_id : '<span style="color:var(--text-muted)">No driver</span>';
+        let statusDisplay = `<span class="badge ${badgeClass}">${v.status}</span>`;
+        let scoreDisplay = Math.round(v.safety_score);
+
+        if (!v.current_driver_id) {
+            statusDisplay = '<span style="color:var(--text-muted)">-</span>';
+            scoreDisplay = '<span style="color:var(--text-muted)">-</span>';
+        } else {
+            if (v.status === 'Warning') badgeClass = 'badge-warning';
+            if (v.status === 'Critical') badgeClass = 'badge-critical';
+            statusDisplay = `<span class="badge ${badgeClass}">${v.status}</span>`;
+        }
 
         const tr = document.createElement('tr');
+        const loc = v.last_latitude ? `${v.last_latitude.toFixed(4)}, ${v.last_longitude.toFixed(4)}` : '-';
         tr.innerHTML = `
             <td><strong>${v.vehicle_id}</strong></td>
-            <td>${driverDisplay}</td>
-            <td><span class="badge ${badgeClass}">${v.status}</span></td>
-            <td>${Math.round(v.safety_score)}</td>
-            <td>${v.last_speed !== null && v.last_speed !== undefined ? Math.round(v.last_speed) : 0} km/h</td>
-            <td>${v.last_acceleration !== null && v.last_acceleration !== undefined ? Math.round(v.last_acceleration) : 0} m/s²</td>
-            <td>${v.fuel_level !== null && v.fuel_level !== undefined ? Math.round(v.fuel_level) + '%' : '-'}</td>
-            <td>${v.last_latitude !== null && v.last_latitude !== undefined ? v.last_latitude.toFixed(4) : '-'}, ${v.last_longitude !== null && v.last_longitude !== undefined ? v.last_longitude.toFixed(4) : '-'}</td>
+            <td>${statusDisplay}</td>
+            <td>${scoreDisplay}</td>
+            <td>${loc}</td>
+            <td style="text-align:center; cursor:pointer;" onclick="showVehicleDetails('${v.vehicle_id}')">
+                <span style="font-size: 18px;">➔</span>
+            </td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+function showVehicleDetails(vid) {
+    const v = vehicles.find(x => x.vehicle_id === vid);
+    if(!v) return;
+    
+    const driver = v.current_driver_id || 'None';
+    const fuel = v.fuel_level ? Math.round(v.fuel_level) + '%' : '-';
+    const speed = v.last_speed ? Math.round(v.last_speed) + ' km/h' : '0 km/h';
+    const loc = v.last_latitude ? `${v.last_latitude.toFixed(4)}, ${v.last_longitude.toFixed(4)}` : '-';
+    
+    document.getElementById('vehicle-details-content').innerHTML = `
+        <div style="grid-column: span 2;"><strong>Vehicle Number:</strong> ${v.vehicle_id}</div>
+        <div><strong>Vehicle Type:</strong> ${v.vehicle_type || 'Standard'}</div>
+        <div><strong>Current Driver:</strong> ${driver}</div>
+        <div><strong>Engine Status:</strong> ${v.engine_status || 'OFF'}</div>
+        <div><strong>Fuel Level:</strong> ${fuel}</div>
+        <div><strong>Location:</strong> ${loc}</div>
+        <div><strong>Last Speed:</strong> ${speed}</div>
+        <div><strong>Odometer:</strong> ${v.odometer ? Math.round(v.odometer) : 0} km</div>
+        <div><strong>Status:</strong> ${v.status || '-'}</div>
+        <div><strong>Risk Level:</strong> ${v.risk_level || 'Low'}</div>
+        <div><strong>Score:</strong> ${v.current_driver_id ? Math.round(v.safety_score) : '-'}</div>
+    `;
+    document.getElementById('vehicle-modal').classList.remove('hidden');
 }
 
 async function updateDrivers() {
@@ -235,11 +267,76 @@ async function updateDrivers() {
                 <td>${d.vehicle_type}</td>
                 <td>${d.historical_mean_speed ? Math.round(d.historical_mean_speed) : '0'} km/h</td>
                 <td>${Math.round(d.safety_score)}</td>
+                <td style="text-align:center; cursor:pointer;" ondblclick="showDriverDetails('${d.driver_id}', '${d.vehicle_id}')">
+                    <span style="font-size: 18px;">➔</span>
+                </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (e) {
         console.error("Failed to load drivers", e);
+    }
+}
+
+function showDriverDetails(did, vid) {
+    const d = document.getElementById('driver-details-content');
+    
+    // Attempt to find current vehicle context for current stats
+    const v = vehicles.find(x => x.vehicle_id === vid) || {};
+    
+    const speed = v.last_speed ? Math.round(v.last_speed) + ' km/h' : '0 km/h';
+    const loc = v.last_latitude ? `${v.last_latitude.toFixed(4)}, ${v.last_longitude.toFixed(4)}` : '-';
+    const status = v.status || 'Offline';
+    const risk = v.risk_level || 'Low';
+    
+    d.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="panel">
+                <h4>Current Data</h4>
+                <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                    <div><strong>Driver ID:</strong> ${did}</div>
+                    <div><strong>Assigned Vehicle:</strong> ${vid}</div>
+                    <div><strong>Current Location:</strong> ${loc}</div>
+                    <div><strong>Driving Status:</strong> ${status}</div>
+                    <div><strong>Current Speed:</strong> ${speed}</div>
+                    <div><strong>Risk Level:</strong> ${risk}</div>
+                </div>
+            </div>
+            <div class="panel">
+                <h4>Past Data</h4>
+                <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                    <div><strong>Driver Score:</strong> 100 (Avg)</div>
+                    <div><strong>Average Speed:</strong> 45 km/h</div>
+                    <div><strong>Total Trips:</strong> 24</div>
+                    <div><strong>Total Violations:</strong> 3</div>
+                    <div><strong>Recent Violations:</strong> Speeding (Yesterday)</div>
+                    <div><strong>Coaching/Feedback History:</strong> Reminded to avoid harsh braking.</div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('driver-modal').classList.remove('hidden');
+}
+
+async function promptDeleteVehicle() {
+    const vid = prompt("Enter the Vehicle ID to delete:");
+    if(!vid) return;
+    try {
+        await fetch(`${API_BASE}/vehicles/${vid}`, { method: 'DELETE' });
+        updateVehicles();
+    } catch (e) {
+        alert("Failed to delete vehicle.");
+    }
+}
+
+async function promptDeleteDriver() {
+    const did = prompt("Enter the Driver ID to delete:");
+    if(!did) return;
+    try {
+        await fetch(`${API_BASE}/drivers/${did}`, { method: 'DELETE' });
+        updateDrivers();
+    } catch (e) {
+        alert("Failed to delete driver.");
     }
 }
 

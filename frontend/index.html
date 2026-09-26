@@ -172,7 +172,8 @@
             <div class="panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="margin: 0; border: none; padding: 0;">Vehicle Fleet</h3>
-                    <button class="btn btn-primary" onclick="promptAddVehicle()">+ Add Vehicle</button>
+                    <button class="btn btn-primary" onclick="promptAddVehicle()" style="margin-right: 8px;">+ Add Vehicle</button>
+                    <button class="btn btn-danger" onclick="promptDeleteVehicle()">- Delete Vehicle</button>
                 </div>
                 <div class="vehicles-controls" style="margin-top: 10px; display: flex; gap: 12px; align-items: center;">
                     <input type="text" id="vehicle-search" placeholder="Search by Vehicle ID or Driver ID" class="premium-input" style="flex:1;" onkeyup="updateVehicles()"/>
@@ -188,6 +189,7 @@
                             <th>Accel</th>
                             <th>Fuel</th>
                             <th>Location</th>
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody id="vehicle-table-body">
@@ -195,10 +197,13 @@
                 </table>
             </div>
             
-            <div id="vehicle-details" class="panel" style="margin-top: 24px; display: none;">
-                <h3>Vehicle Details</h3>
-                <div id="vehicle-details-content" class="details-grid" style="margin-top: 16px;">
-                    <!-- Vehicle details will be injected here when a row is clicked -->
+            <div id="vehicle-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-btn" onclick="document.getElementById('vehicle-modal').classList.add('hidden')">&times;</span>
+                    <h3>Vehicle Details</h3>
+                    <div id="vehicle-details-content" class="details-grid" style="margin-top: 16px;">
+                        <!-- Vehicle details will be injected here when a row is clicked -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -208,7 +213,8 @@
             <div class="panel">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 style="margin: 0; border: none; padding: 0;">Driver Profiles</h3>
-                    <button class="btn btn-primary" onclick="promptAddDriver()">+ Add Driver</button>
+                    <button class="btn btn-primary" onclick="promptAddDriver()" style="margin-right: 8px;">+ Add Driver</button>
+                    <button class="btn btn-danger" onclick="promptDeleteDriver()">- Delete Driver</button>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -218,11 +224,21 @@
                             <th>Vehicle Type</th>
                             <th>Historical Mean Speed</th>
                             <th>Safety Score</th>
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody id="driver-table-body">
                     </tbody>
                 </table>
+            </div>
+            <div id="driver-modal" class="modal hidden">
+                <div class="modal-content" style="max-width: 800px;">
+                    <span class="close-btn" onclick="document.getElementById('driver-modal').classList.add('hidden')">&times;</span>
+                    <h3>Driver Details</h3>
+                    <div id="driver-details-content" style="margin-top: 16px;">
+                        <!-- Driver details will be injected here -->
+                    </div>
+                </div>
             </div>
         </section>
 

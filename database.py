@@ -34,6 +34,7 @@ class DriverProfile(Base):
     historical_mean_speed = Column(Float, default=0.0)
     historical_speed_variance = Column(Float, default=0.0)
     total_speed_readings = Column(Integer, default=0)
+    safety_score = Column(Float, default=100.0)
 
 class Telemetry(Base):
     __tablename__ = "telemetry"

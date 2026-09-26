@@ -97,17 +97,22 @@
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
                         <h4>Simulator Control</h4>
                         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Trigger faults and events to test the telemetry pipeline.</p>
-                        <div class="control-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="control-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <button class="btn btn-primary" onclick="injectScenario('START')">Start Vehicle</button>
                             <button class="btn btn-primary" onclick="injectScenario('STOP')">Stop Vehicle</button>
+                            
                             <button class="btn btn-warning" onclick="injectScenario('SPEEDING')">Inject Speeding</button>
-                            <button class="btn btn-warning" onclick="injectScenario('HARSH_BRAKING')">Inject Harsh Braking</button>
-                            <button class="btn btn-warning" onclick="injectScenario('HARSH_ACCEL')">Inject Harsh Accel</button>
-                            <button class="btn btn-danger" onclick="injectScenario('CRASH')">Trigger Possible Crash</button>
-                            <button class="btn btn-secondary" onclick="injectScenario('DUPLICATE')">Inject Duplicate Data</button>
-                            <button class="btn btn-secondary" onclick="injectScenario('OUT_OF_ORDER')">Inject Out-of-Order</button>
-                            <button class="btn btn-secondary" onclick="injectScenario('INVALID')">Inject Invalid Data</button>
+                            <button class="btn btn-danger" onclick="injectScenario('CRASH')">Trigger Crash</button>
+                            
+                            <button class="btn btn-warning" onclick="injectScenario('HARSH_ACCEL')">Harsh Accel</button>
+                            <button class="btn btn-warning" onclick="injectScenario('HARSH_BRAKING')">Harsh Braking</button>
+                            
+                            <button class="btn btn-secondary" onclick="injectScenario('DUPLICATE')">Duplicate Data</button>
+                            <button class="btn btn-secondary" onclick="injectScenario('INVALID')">Invalid Data</button>
+                            
+                            <button class="btn btn-secondary" onclick="injectScenario('OUT_OF_ORDER')">Out-of-Order Data</button>
                             <button class="btn btn-secondary" onclick="injectScenario('GAP_START')">Start Data Gap</button>
+                            
                             <button class="btn btn-primary" onclick="injectScenario('GAP_END')" style="grid-column: span 2;">End Data Gap</button>
                         </div>
                     </div>

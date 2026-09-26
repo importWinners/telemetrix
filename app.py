@@ -108,9 +108,14 @@ async def sim_loop():
                     elif inj['type'] == 'CRASH':
                         payload['speed'] = 80
                         sim_vehicles[veh_id]['speed'] = 0
-                    elif inj['type'] == 'CRASH_STOP':
+                        sim_vehicles[veh_id]['target_speed'] = 0
+                        sim_vehicles[veh_id]['engine'] = 'OFF'
+                        # Promote to step 2 for next tick
+                        inj['type'] = 'CRASH_STEP_2'
+                    elif inj['type'] == 'CRASH_STEP_2':
                         payload['speed'] = 0
                         payload['diagnostic_codes'] = ['AIRBAG_DEPLOYED']
+                        inj['type'] = 'CRASH_DONE'
                     elif inj['type'] == 'INVALID':
                         payload['speed'] = 500
                     elif inj['type'] == 'OUT_OF_ORDER':
@@ -131,8 +136,14 @@ async def sim_loop():
                     
                     if any(i['type'] == 'DUPLICATE' for i in injections):
                         process_telemetry(db, payload)
+                        
+            # Decrement ticks
+            for inj in inject_queue:
+                if 'ticks' in inj:
+                    inj['ticks'] -= 1
                     
-            inject_queue[:] = [i for i in inject_queue if i['type'] != 'DUPLICATE' and i['type'] != 'OUT_OF_ORDER' and i['type'] != 'SPEEDING' and i['type'] != 'HARSH_BRAKING' and i['type'] != 'HARSH_ACCEL' and i['type'] != 'CRASH' and i['type'] != 'CRASH_STOP' and i['type'] != 'INVALID']
+            inject_queue[:] = [i for i in inject_queue if i.get('ticks', 1) > 0 and i['type'] not in ['CRASH_DONE', 'CRASH_STOP']]
+
 
         except Exception as e:
             print(f"Sim loop error: {e}")
@@ -154,10 +165,6 @@ def inject(action: str, veh_id: str = "TN14-4289"):
         inject_queue[:] = [i for i in inject_queue if i['type'] != 'GAP' or i['veh_id'] != veh_id]
     elif action == "CRASH":
         inject_queue.append({"veh_id": veh_id, "type": "CRASH"})
-        async def delayed_stop():
-            await asyncio.sleep(1.2)
-            inject_queue.append({"veh_id": veh_id, "type": "CRASH_STOP"})
-        asyncio.create_task(delayed_stop())
     elif action == "START":
         if veh_id in sim_vehicles:
             sim_vehicles[veh_id]["engine"] = "ON"
@@ -166,7 +173,7 @@ def inject(action: str, veh_id: str = "TN14-4289"):
         if veh_id in sim_vehicles:
             sim_vehicles[veh_id]["target_speed"] = 0.0
     else:
-        inject_queue.append({"veh_id": veh_id, "type": action.upper()})
+        inject_queue.append({"veh_id": veh_id, "type": action.upper(), "ticks": 3})
     
     return {"status": "injected", "action": action, "veh_id": veh_id}
 

@@ -189,21 +189,16 @@
                             <th>Accel</th>
                             <th>Fuel</th>
                             <th>Location</th>
-                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody id="vehicle-table-body">
                     </tbody>
                 </table>
             </div>
-            
-            <div id="vehicle-modal" class="modal hidden">
-                <div class="modal-content">
-                    <span class="close-btn" onclick="document.getElementById('vehicle-modal').classList.add('hidden')">&times;</span>
-                    <h3>Vehicle Details</h3>
-                    <div id="vehicle-details-content" class="details-grid" style="margin-top: 16px;">
-                        <!-- Vehicle details will be injected here when a row is clicked -->
-                    </div>
+            <div id="vehicle-details" class="panel" style="margin-top: 24px; display: none;">
+                <h3>Vehicle Details</h3>
+                <div id="vehicle-details-content" class="details-grid" style="margin-top: 16px;">
+                    <!-- Vehicle details will be injected here when a row is clicked -->
                 </div>
             </div>
         </section>
@@ -224,21 +219,11 @@
                             <th>Vehicle Type</th>
                             <th>Historical Mean Speed</th>
                             <th>Safety Score</th>
-                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody id="driver-table-body">
                     </tbody>
                 </table>
-            </div>
-            <div id="driver-modal" class="modal hidden">
-                <div class="modal-content" style="max-width: 800px;">
-                    <span class="close-btn" onclick="document.getElementById('driver-modal').classList.add('hidden')">&times;</span>
-                    <h3>Driver Details</h3>
-                    <div id="driver-details-content" style="margin-top: 16px;">
-                        <!-- Driver details will be injected here -->
-                    </div>
-                </div>
             </div>
         </section>
 

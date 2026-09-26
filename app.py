@@ -84,9 +84,9 @@ def generate_telemetry(veh_id):
         
     speed = state["speed"]
     if speed > 100:
-        state["local_alerts"].insert(0, {"description": f"Extreme Speeding at {speed} km/h", "severity": "CRITICAL", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+        state["local_alerts"].insert(0, {"description": f"Extreme Speeding at {round(speed)} km/h", "severity": "CRITICAL", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
     elif speed > 80:
-        state["local_alerts"].insert(0, {"description": f"Speeding at {speed} km/h", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
+        state["local_alerts"].insert(0, {"description": f"Speeding at {round(speed)} km/h", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})
         
     if state["accel"] < -5.0:
         state["local_alerts"].insert(0, {"description": f"Harsh braking: {state['accel']} m/s²", "severity": "WARNING", "timestamp": (datetime.utcnow() + timedelta(hours=5, minutes=30)).isoformat()})

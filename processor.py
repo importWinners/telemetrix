@@ -11,7 +11,7 @@ def process_telemetry(db, data: dict):
     try:
         v_time = datetime.fromisoformat(data.get("vehicle_timestamp"))
     except:
-        v_time = datetime.utcnow()
+        v_time = datetime.utcnow() + timedelta(hours=5, minutes=30)
         
     driver_id = data.get("driver_id")
     veh_type = data.get("vehicle_type", "Standard")
@@ -139,7 +139,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
             severity="CRITICAL",
             timestamp=curr_time,
             location=lat_lon,
-            description=f"Extreme Speeding at {speed} km/h"
+            description=f"Extreme Speeding at {round(speed)} km/h"
         )
         db.add(evt)
         vehicle.risk_level = "Critical"
@@ -157,7 +157,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
             severity="WARNING",
             timestamp=curr_time,
             location=lat_lon,
-            description=f"Speeding at {speed} km/h"
+            description=f"Speeding at {round(speed)} km/h"
         )
         db.add(evt)
         vehicle.risk_level = "High Risk"
@@ -183,7 +183,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
                 severity="WARNING",
                 timestamp=curr_time,
                 location=lat_lon,
-                description=f"Behaviour anomaly detected for {d_id} in {driver_profile.vehicle_type} (Confidence: {confidence}%). Reason: Current driving pattern differs significantly from historical behaviour. (Mean: {mean:.1f}, Current: {speed})"
+                description=f"Behaviour anomaly detected for {d_id} in {driver_profile.vehicle_type} (Confidence: {confidence}%). Reason: Current driving pattern differs significantly from historical behaviour. (Mean: {round(mean)}, Current: {round(speed)})"
             )
             db.add(evt)
             vehicle.status = "Warning"

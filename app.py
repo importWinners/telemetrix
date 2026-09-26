@@ -46,20 +46,27 @@ def generate_telemetry(veh_id):
     else:
         # Smooth, realistic speed changes instead of random jumps
         target_speed = state.get("target_speed", random.uniform(40, 75))
-        if abs(state["speed"] - target_speed) < 2:
+        if abs(state["speed"] - target_speed) < 2 and target_speed > 0:
             state["target_speed"] = random.uniform(40, 75)
         
         # Accelerate/Decelerate towards target
         if state["speed"] < target_speed:
-            state["speed"] += random.uniform(0.5, 1.5)
+            state["speed"] += random.uniform(2.0, 5.0)
         else:
-            state["speed"] -= random.uniform(0.5, 1.5)
+            if target_speed == 0.0:
+                state["speed"] -= random.uniform(10.0, 15.0) # Stop faster
+            else:
+                state["speed"] -= random.uniform(2.0, 5.0)
             
         state["speed"] = round(max(0, state["speed"]), 1)
+        
+        # Turn off engine automatically when fully stopped
+        if target_speed == 0.0 and state["speed"] == 0.0:
+            state["engine"] = "OFF"
     
-    # Realistic GPS movement
-    state["lat"] = round(state["lat"] + (state["speed"] * 0.0000005), 6)
-    state["lon"] = round(state["lon"] + (state["speed"] * 0.0000005), 6)
+    # Realistic GPS movement (increased multiplier so it's visible on UI)
+    state["lat"] = round(state["lat"] + (state["speed"] * 0.00002), 6)
+    state["lon"] = round(state["lon"] + (state["speed"] * 0.00002), 6)
     
     # Realistic Odometer and Fuel drop
     state["odometer"] = round(state["odometer"] + state["speed"] * (1 / 3600.0), 1)

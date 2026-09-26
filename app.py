@@ -39,18 +39,23 @@ gap_buffer = {}
 def generate_telemetry(veh_id):
     state = sim_vehicles[veh_id]
     
-    # Smooth, realistic speed changes instead of random jumps
-    target_speed = state.get("target_speed", random.uniform(40, 75))
-    if abs(state["speed"] - target_speed) < 2:
-        state["target_speed"] = random.uniform(40, 75)
-    
-    # Accelerate/Decelerate towards target
-    if state["speed"] < target_speed:
-        state["speed"] += random.uniform(0.5, 1.5)
+    if state["engine"] == "OFF":
+        state["speed"] = 0.0
+        state["target_speed"] = 0.0
+        state["accel"] = 0.0
     else:
-        state["speed"] -= random.uniform(0.5, 1.5)
+        # Smooth, realistic speed changes instead of random jumps
+        target_speed = state.get("target_speed", random.uniform(40, 75))
+        if abs(state["speed"] - target_speed) < 2:
+            state["target_speed"] = random.uniform(40, 75)
         
-    state["speed"] = round(max(0, state["speed"]), 1)
+        # Accelerate/Decelerate towards target
+        if state["speed"] < target_speed:
+            state["speed"] += random.uniform(0.5, 1.5)
+        else:
+            state["speed"] -= random.uniform(0.5, 1.5)
+            
+        state["speed"] = round(max(0, state["speed"]), 1)
     
     # Realistic GPS movement
     state["lat"] = round(state["lat"] + (state["speed"] * 0.0000005), 6)
@@ -58,7 +63,8 @@ def generate_telemetry(veh_id):
     
     # Realistic Odometer and Fuel drop
     state["odometer"] = round(state["odometer"] + state["speed"] * (1 / 3600.0), 1)
-    state["fuel"] = round(max(0, state["fuel"] - 0.005), 1)
+    if state["engine"] == "ON":
+        state["fuel"] = round(max(0, state["fuel"] - 0.005), 1)
     
     if "prev_speed" in state:
         state["accel"] = round((state["speed"] - state["prev_speed"]) / 3.6, 2)

@@ -98,6 +98,8 @@
                         <h4>Simulator Control</h4>
                         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 10px;">Trigger faults and events to test the telemetry pipeline.</p>
                         <div class="control-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn btn-primary" onclick="injectScenario('START')">Start Vehicle</button>
+                            <button class="btn btn-primary" onclick="injectScenario('STOP')">Stop Vehicle</button>
                             <button class="btn btn-warning" onclick="injectScenario('SPEEDING')">Inject Speeding</button>
                             <button class="btn btn-warning" onclick="injectScenario('HARSH_BRAKING')">Inject Harsh Braking</button>
                             <button class="btn btn-warning" onclick="injectScenario('HARSH_ACCEL')">Inject Harsh Accel</button>

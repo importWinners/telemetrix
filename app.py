@@ -24,12 +24,13 @@ app.add_middleware(
 # Simulator State
 sim_vehicles = {
     f"{'TN14-4289' if i == 0 else 'V10'+str(i)}": {
-        "speed": random.uniform(40, 70),
+        "speed": 0.0,
+        "target_speed": 0.0,
         "lat": 12.9716 + random.uniform(-0.05, 0.05),
         "lon": 80.2450 + random.uniform(-0.05, 0.05),
         "fuel": random.uniform(20, 100),
         "odometer": random.uniform(10000, 50000),
-        "engine": "ON"
+        "engine": "OFF"
     } for i in range(5)
 }
 inject_queue = []
@@ -151,6 +152,13 @@ def inject(action: str, veh_id: str = "TN14-4289"):
             await asyncio.sleep(1.2)
             inject_queue.append({"veh_id": veh_id, "type": "CRASH_STOP"})
         asyncio.create_task(delayed_stop())
+    elif action == "START":
+        if veh_id in sim_vehicles:
+            sim_vehicles[veh_id]["engine"] = "ON"
+            sim_vehicles[veh_id]["target_speed"] = 50.0
+    elif action == "STOP":
+        if veh_id in sim_vehicles:
+            sim_vehicles[veh_id]["target_speed"] = 0.0
     else:
         inject_queue.append({"veh_id": veh_id, "type": action.upper()})
     
@@ -261,12 +269,12 @@ def create_vehicle(new_veh: NewVehicle, db: Session = Depends(get_db)):
     if new_veh.vehicle_id not in sim_vehicles:
         sim_vehicles[new_veh.vehicle_id] = {
             "speed": 0.0,
-            "target_speed": 40.0,
+            "target_speed": 0.0,
             "lat": 12.9716 + random.uniform(-0.05, 0.05),
             "lon": 80.2450 + random.uniform(-0.05, 0.05),
             "fuel": 100.0,
             "odometer": 0.0,
-            "engine": "ON"
+            "engine": "OFF"
         }
         
     return {"status": "success", "vehicle_id": new_veh.vehicle_id}
@@ -285,7 +293,25 @@ async def driver_login(vehicle_id: str, request: Request, db: Session = Depends(
     vehicle.current_driver_id = driver_id
     vehicle.vehicle_type = vehicle_type
     db.commit()
+    
+    if vehicle_id in sim_vehicles:
+        sim_vehicles[vehicle_id]["engine"] = "ON"
+        sim_vehicles[vehicle_id]["target_speed"] = 40.0
+        
     return {"status": "success", "message": f"Driver {driver_id} logged into {vehicle_id}"}
+
+@app.post("/api/vehicles/{vehicle_id}/logout")
+def driver_logout(vehicle_id: str, db: Session = Depends(get_db)):
+    vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == vehicle_id).first()
+    if vehicle:
+        vehicle.current_driver_id = None
+        db.commit()
+        
+    if vehicle_id in sim_vehicles:
+        sim_vehicles[vehicle_id]["engine"] = "OFF"
+        sim_vehicles[vehicle_id]["target_speed"] = 0.0
+        
+    return {"status": "success"}
 
 @app.get("/api/events")
 def get_events(db: Session = Depends(get_db)):

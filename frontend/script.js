@@ -60,7 +60,14 @@ async function loginAs(role) {
     startPolling();
 }
 
-function logout() {
+async function logout() {
+    if (currentRole === 'driver' && driverVid) {
+        try {
+            await fetch(`${API_BASE}/vehicles/${driverVid}/logout`, { method: 'POST' });
+        } catch (e) {
+            console.error("Logout error", e);
+        }
+    }
     currentRole = null;
     driverVid = null;
     clearInterval(pollInterval);

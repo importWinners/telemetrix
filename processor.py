@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from config import SPEED_LIMIT_KMH, HARSH_BRAKING_THRESHOLD_MS2, HARSH_ACCEL_THRESHOLD_MS2, TELEMETRY_TIMEOUT_SECONDS, MAX_VALID_SPEED_KMH, INCIDENT_SPEED_DROP_KMH
 from database import Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError, DriverProfile
+from datetime import timedelta
 
 def process_telemetry(db, data: dict):
     msg_id = data.get("message_id")
@@ -116,7 +117,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
     lat_lon = f"{data.get('latitude')},{data.get('longitude')}"
     d_id = vehicle.current_driver_id
     # Speed > 100 check
-    if speed > 100:
+    if speed > 100 and not should_throttle_event(db, veh_id, "SPEEDING_EXTREME", curr_time):
         evt = SafetyEvent(
             event_id=str(uuid.uuid4()),
             vehicle_id=veh_id,
@@ -132,7 +133,7 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
         vehicle.status = "Critical"
         vehicle.safety_score = max(0, vehicle.safety_score - 3)
     # Normal Speeding check
-    elif speed > SPEED_LIMIT_KMH:
+    elif speed > SPEED_LIMIT_KMH and not should_throttle_event(db, veh_id, "SPEEDING", curr_time):
         evt = SafetyEvent(
             event_id=str(uuid.uuid4()),
             vehicle_id=veh_id,
@@ -236,3 +237,14 @@ def detect_safety_events(db, vehicle, driver_profile, data, prev_speed, prev_tim
                 db.add(inc)
                 vehicle.status = "Critical"
                 vehicle.risk_level = "Critical"
+
+def should_throttle_event(db, veh_id, event_type, curr_time):
+    # Prevent spamming the exact same event type for the same vehicle within 30 seconds
+    threshold_time = curr_time - timedelta(seconds=30)
+    recent_event = db.query(SafetyEvent).filter(
+        SafetyEvent.vehicle_id == veh_id,
+        SafetyEvent.event_type == event_type,
+        SafetyEvent.timestamp >= threshold_time
+    ).first()
+    return recent_event is not None
+

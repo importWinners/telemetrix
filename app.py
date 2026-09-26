@@ -36,10 +36,27 @@ inject_queue = []
 
 def generate_telemetry(veh_id):
     state = sim_vehicles[veh_id]
-    state["speed"] = max(0, state["speed"] + random.uniform(-2, 2))
-    state["lat"] += random.uniform(-0.0001, 0.0001)
-    state["lon"] += random.uniform(-0.0001, 0.0001)
-    state["odometer"] += state["speed"] * (1 / 3600.0)
+    
+    # Smooth, realistic speed changes instead of random jumps
+    target_speed = state.get("target_speed", random.uniform(40, 75))
+    if abs(state["speed"] - target_speed) < 2:
+        state["target_speed"] = random.uniform(40, 75)
+    
+    # Accelerate/Decelerate towards target
+    if state["speed"] < target_speed:
+        state["speed"] += random.uniform(0.5, 1.5)
+    else:
+        state["speed"] -= random.uniform(0.5, 1.5)
+        
+    state["speed"] = round(max(0, state["speed"]), 1)
+    
+    # Realistic GPS movement
+    state["lat"] = round(state["lat"] + (state["speed"] * 0.0000005), 6)
+    state["lon"] = round(state["lon"] + (state["speed"] * 0.0000005), 6)
+    
+    # Realistic Odometer and Fuel drop
+    state["odometer"] = round(state["odometer"] + state["speed"] * (1 / 3600.0), 1)
+    state["fuel"] = round(max(0, state["fuel"] - 0.005), 1)
     
     return {
         "message_id": f"MSG_{uuid.uuid4().hex[:8]}",

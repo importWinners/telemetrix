@@ -51,8 +51,8 @@ It supports two roles:
 
 ## Deployment (Render)
 
-This application is ready to deploy on Render.com:
-- Connect this repository to a new Render **Web Service**.
-- Build Command: `pip install -r requirements.txt`
-- Start Command: `python app.py` (The app dynamically binds to Render's `$PORT`).
-- *Note: Run the `simulator.py` script locally to feed data into your deployed Render URL by modifying `API_URL` in `simulator.py`.*
+Deploy this application instantly using Render Blueprints:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/importWinners/telemetrix)
+
+*(Note: Run the `simulator.py` script locally to feed data into your deployed Render URL by modifying `API_URL` in `simulator.py` to point to your live Render server).*

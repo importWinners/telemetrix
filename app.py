@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uvicorn
-from database import init_db, get_db, Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError, SessionLocal
+from database import init_db, get_db, Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError, SessionLocal, DriverProfile
 from processor import process_telemetry
 from config import app_name
 import asyncio

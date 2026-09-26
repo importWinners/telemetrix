@@ -4,9 +4,12 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uvicorn
-from database import init_db, get_db, Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError
+from database import init_db, get_db, Vehicle, Telemetry, SafetyEvent, Incident, TelemetryError, SessionLocal
 from processor import process_telemetry
 from config import app_name
+import asyncio
+import random
+import uuid
 
 app = FastAPI(title=app_name)
 
@@ -18,9 +21,105 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Simulator State
+sim_vehicles = {
+    f"{'TN14-4289' if i == 0 else 'V10'+str(i)}": {
+        "speed": random.uniform(40, 70),
+        "lat": 12.9716 + random.uniform(-0.05, 0.05),
+        "lon": 80.2450 + random.uniform(-0.05, 0.05),
+        "fuel": random.uniform(20, 100),
+        "odometer": random.uniform(10000, 50000),
+        "engine": "ON"
+    } for i in range(5)
+}
+inject_queue = []
+
+def generate_telemetry(veh_id):
+    state = sim_vehicles[veh_id]
+    state["speed"] = max(0, state["speed"] + random.uniform(-2, 2))
+    state["lat"] += random.uniform(-0.0001, 0.0001)
+    state["lon"] += random.uniform(-0.0001, 0.0001)
+    state["odometer"] += state["speed"] * (1 / 3600.0)
+    
+    return {
+        "message_id": f"MSG_{uuid.uuid4().hex[:8]}",
+        "vehicle_id": veh_id,
+        "latitude": state["lat"],
+        "longitude": state["lon"],
+        "engine_status": state["engine"],
+        "fuel_level": state["fuel"],
+        "speed": state["speed"],
+        "odometer": state["odometer"],
+        "diagnostic_codes": [],
+        "vehicle_timestamp": datetime.utcnow().isoformat()
+    }
+
+async def sim_loop():
+    while True:
+        try:
+            db = SessionLocal()
+            for veh_id in sim_vehicles:
+                injections = [i for i in inject_queue if i['veh_id'] == veh_id or i['veh_id'] == 'ALL']
+                if any(i['type'] == 'GAP' for i in injections):
+                    continue
+                    
+                payload = generate_telemetry(veh_id)
+                
+                for inj in injections:
+                    if inj['type'] == 'SPEEDING':
+                        payload['speed'] = 95
+                        sim_vehicles[veh_id]['speed'] = 95
+                    elif inj['type'] == 'HARSH_BRAKING':
+                        payload['speed'] = max(0, sim_vehicles[veh_id]['speed'] - 20)
+                        sim_vehicles[veh_id]['speed'] = payload['speed']
+                    elif inj['type'] == 'HARSH_ACCEL':
+                        payload['speed'] = min(150, sim_vehicles[veh_id]['speed'] + 15)
+                        sim_vehicles[veh_id]['speed'] = payload['speed']
+                    elif inj['type'] == 'CRASH':
+                        payload['speed'] = 80
+                        sim_vehicles[veh_id]['speed'] = 0
+                    elif inj['type'] == 'CRASH_STOP':
+                        payload['speed'] = 0
+                        payload['diagnostic_codes'] = ['AIRBAG_DEPLOYED']
+                    elif inj['type'] == 'INVALID':
+                        payload['speed'] = 500
+                    elif inj['type'] == 'OUT_OF_ORDER':
+                        payload['vehicle_timestamp'] = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+                
+                process_telemetry(db, payload)
+                
+                if any(i['type'] == 'DUPLICATE' for i in injections):
+                    process_telemetry(db, payload)
+                    
+            inject_queue[:] = [i for i in inject_queue if i['type'] == 'GAP']
+        except Exception as e:
+            print(f"Sim loop error: {e}")
+        finally:
+            db.close()
+            
+        await asyncio.sleep(1)
+
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     init_db()
+    asyncio.create_task(sim_loop())
+
+@app.post("/api/inject/{action}")
+def inject(action: str, veh_id: str = "TN14-4289"):
+    if action == "GAP_START":
+        inject_queue.append({"veh_id": veh_id, "type": "GAP"})
+    elif action == "GAP_END":
+        inject_queue[:] = [i for i in inject_queue if i['type'] != 'GAP' or i['veh_id'] != veh_id]
+    elif action == "CRASH":
+        inject_queue.append({"veh_id": veh_id, "type": "CRASH"})
+        async def delayed_stop():
+            await asyncio.sleep(1.2)
+            inject_queue.append({"veh_id": veh_id, "type": "CRASH_STOP"})
+        asyncio.create_task(delayed_stop())
+    else:
+        inject_queue.append({"veh_id": veh_id, "type": action.upper()})
+    
+    return {"status": "injected", "action": action, "veh_id": veh_id}
 
 @app.get("/api/config")
 def get_config():
@@ -35,7 +134,7 @@ async def receive_telemetry(request: Request, db: Session = Depends(get_db)):
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats(db: Session = Depends(get_db)):
     total_vehicles = db.query(Vehicle).count()
-    active_vehicles = db.query(Vehicle).filter(Vehicle.speed > 0).count()
+    active_vehicles = db.query(Vehicle).filter(Vehicle.last_speed > 0).count()
     safety_events = db.query(SafetyEvent).count()
     incidents = db.query(Incident).count()
     

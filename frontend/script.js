@@ -1,5 +1,4 @@
-const API_BASE = "http://localhost:8000/api";
-const SIM_BASE = "http://localhost:8001";
+const API_BASE = "/api";
 
 let pollInterval;
 let currentRole = null; // 'manager' or 'driver'
@@ -118,6 +117,9 @@ async function updateDriverView() {
         document.getElementById('driver-my-status').innerText = me.status;
         document.getElementById('driver-my-status').className = `badge badge-${me.status === 'Normal' ? 'normal' : me.status === 'Warning' ? 'warning' : 'critical'}`;
         document.getElementById('driver-my-speed').innerText = me.last_speed ? me.last_speed.toFixed(1) : '0';
+        document.getElementById('driver-my-fuel').innerText = me.fuel_level ? me.fuel_level.toFixed(1) + '%' : '-';
+        document.getElementById('driver-my-engine').innerText = me.engine_status || '-';
+        document.getElementById('driver-my-location').innerText = `${me.last_latitude ? me.last_latitude.toFixed(4) : '-'}, ${me.last_longitude ? me.last_longitude.toFixed(4) : '-'}`;
     }
 
     // Fetch alerts
@@ -269,7 +271,7 @@ async function viewIncident(id) {
 
 async function injectScenario(action) {
     try {
-        let url = `${SIM_BASE}/inject/${action}`;
+        let url = `${API_BASE}/inject/${action}`;
         if (driverVid) {
             url += `?veh_id=${driverVid}`;
         }
@@ -277,7 +279,7 @@ async function injectScenario(action) {
         const data = await res.json();
         alert(`Injected scenario: ${data.action} on ${data.veh_id}`);
     } catch (e) {
-        alert("Failed to inject scenario. Is the simulator running?");
+        alert("Failed to inject scenario.");
         console.error(e);
     }
 }
